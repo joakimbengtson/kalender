@@ -8,7 +8,7 @@
 	<link rel='stylesheet' type='text/css' href='css/styles.css'>
 	<link rel="manifest" href="manifest.json">
 	<script type="text/javascript" src="lib/jquery/jquery-2.1.1.min.js"></script>
-	<script type="text/javascript" src="lib/simpleweather/jquery.simpleWeather.min.js"></script>
+	<script type="text/javascript" src="lib/simplerweather/jquery.simplerWeather.min.js"></script>
 	<script src="js/core.js"></script>
 </head>
 
@@ -73,24 +73,20 @@
 	    }
 	    return time.replace(/(am|pm)/, '');
 	}
-
+	
 	function executeQuery() {
 
-		$.ajax({
-	    	url: 'http://app-o.se/jbn/kalender',
-			success: function(data) {
-				var d = new Date();
+		var d = new Date();
 
-				drawCalendar();
-				drawWeather();
-				$(".timestamp")[0].innerHTML = d.toLocaleTimeString() + ", v. " + d.getWeek();
-				$("#background")[0].innerHTML = d.getDate();
+		//drawCalendar();
+		drawWeather();
+		$(".timestamp")[0].innerHTML = d.toLocaleTimeString() + ", v. " + d.getWeek();
+		$("#background")[0].innerHTML = d.getDate();
 
-	    	}
-	  	});
-	  	var secondsBetweenUpdates = 360 * 1000; // 360 sec = 1 hour
+	  	var secondsBetweenUpdates = 200 * 1000;
 	  	setTimeout(executeQuery, secondsBetweenUpdates);
-	}
+	}	
+
 
 	var addRow = function (time, desc, loc) {
 		if (time != '')
@@ -241,12 +237,11 @@
 	function drawWeather() {
 		var nowDate = new Date();
 
-		$.simpleWeather({
-		    location: 'Sodra Sandby, Skane',
-		    woeid: '',
-		    unit: 'f',
+		$.simplerWeather({
+			authmethod: 'proxy',
+			proxyurl: 'http://app-o.se/jbn/kalender/js/proxy.php',
 		    success: function(weather) {
-
+console.log("w:", weather);
 		      html = '<br/><br/><br/><div class="container"><i class="icon-' + weather.code + '"></i><div class="UR pushdown">' + weather.alt.temp + '<small>&deg; ('+ Math.round(weather.wind.speed * 0.44704) + ' m/s ' + getSwe(weather.wind.direction).toLowerCase() + ')</small></div>';
 			  html = html + '<div class="LR">Idag</div><br/></div>';
 
@@ -264,6 +259,7 @@
 		    },
 
 		    error: function(error) {
+				console.log("err:", error);
 		      $("#weather").html('<p>'+error+'</p>');
 		    }
 
