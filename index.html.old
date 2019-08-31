@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+	<meta name="mobile-web-app-capable" content="yes">
+
+	<link rel='stylesheet' type='text/css' href='css/styles.css'>
+	<link rel="manifest" href="manifest.json">
+	<script type="text/javascript" src="lib/jquery/jquery-2.1.1.min.js"></script>
+	<script type="text/javascript" src="lib/simplerweather/jquery.simplerWeather.min.js"></script>
+	<script type="text/javascript" src="https://apis.google.com/js/api.js"></script>	
+	<script src="js/core.js"></script>
+</head>
+
+
+<body>
+		
+<script>
+	
+      var CLIENT_ID = '144895398888-e2jn6gag10uiapdpm8f267p87org4qgg.apps.googleusercontent.com';
+      var API_KEY = 'AIzaSyCAKoToklkt870xc8CjPx2wp9k8lfzi_ns';
+      var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"];
+      var SCOPES = "https://www.googleapis.com/auth/calendar.readonly";	
+/*
+  function authenticate() {
+    return gapi.auth2.getAuthInstance()
+        .signIn({scope: "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.events.readonly https://www.googleapis.com/auth/calendar.readonly"})
+        .then(function() { console.log("Sign-in successful"); },
+              function(err) { console.error("Error signing in", err); });
+  }
+  
+  function loadClient() {
+    gapi.client.setApiKey("AIzaSyDuXG_dBYN5SVWk_xuWXAreopdsdCqUfFs");
+    return gapi.client.load("https://content.googleapis.com/discovery/v1/apis/calendar/v3/rest")
+        .then(function() { console.log("GAPI client loaded for API"); },
+              function(err) { console.error("Error loading GAPI client for API", err); });
+  }
+
+  function execute() {
+    return gapi.client.calendar.events.list({
+      "calendarId": "f7adpar1ncg3bhf3up3nkc71q4dbo519@import.calendar.google.com"
+    })
+        .then(function(response) {
+                // Handle the results here (response.result has the parsed body).
+                console.log("Response", response);
+              },
+              function(err) { console.error("Execute error", err); });
+  }
+    
+  */
+	var days = [
+	    'Söndag',
+	    'Måndag',
+	    'Tisdag',
+	    'Onsdag',
+	    'Torsdag',
+	    'Fredag',
+	    'Lördag'
+	];
+
+	var cardinals = [
+	    'N',
+	    'N',
+	    'NNE',
+	    'NNO',
+	    'NE',
+	    'NO',
+	    'ENE',
+	    'ONO',
+	    'E',
+	    'Ö',
+	    'ESE',
+	    'OSO',
+	    'SE',
+	    'SO',
+	    'SSE',
+	    'SSO',
+	    'S',
+	    'S',
+	    'SSW',
+	    'SSV',
+	    'SW',
+	    'SV',
+	    'WSW',
+	    'VSV',
+	    'W',
+	    'V',
+	    'WNW',
+	    'VNV',
+	    'NW',
+	    'NV',
+	    'NNW',
+	    'NNV'
+	];
+
+
+	function convertTo24Hour(time) {
+	    var hours = parseInt(time.substr(0, 2));
+	    if(time.indexOf('am') != -1 && hours == 12) {
+			time = time.replace('12', '0');
+	    }
+	    if(time.indexOf('pm')  != -1 && hours < 12) {
+			time = time.replace(hours, (hours + 12));
+	    }
+	    return time.replace(/(am|pm)/, '');
+	}
+
+	var addRow = function (time, desc, loc) {
+		if (time != '')
+			time = "<span style='color: rgb(200,200,200)'>" + time + "</span> ";
+
+		if (loc != '')
+			loc =  ", <span style='color: rgb(180,180,180)'>" + loc + "</span>";
+
+		$("#event-list").append("<div class='row'>" + time + desc + loc + "</div>");
+	};
+	
+	function listUpcomingEvents() {
+        gapi.client.calendar.events.list({
+          'calendarId': 'f7adpar1ncg3bhf3up3nkc71q4dbo519@import.calendar.google.com',
+          'timeMin': (new Date()).toISOString(),
+          'showDeleted': false,
+          'singleEvents': true,
+          'maxResults': 10,
+          'orderBy': 'startTime'
+        }).then(function(response) {
+          var events = response.result.items;
+
+          if (events.length > 0) {
+            for (i = 0; i < events.length; i++) {
+              var event = events[i];
+              var when = event.start.dateTime;
+              if (!when) {
+                when = event.start.date;
+              }
+              console.log(event.summary + ' (' + when + ')');
+            }
+          } else {
+            console.log('No upcoming events found.');
+          }
+        });
+      }	
+
+	function drawCalendar() {
+		var description;
+		var location = '';
+		var hm = '';
+		var startDate;
+		var todayHeaderAdded = false;
+		var tomorrowHeaderAdded = false;
+		var fridayHeaderAdded = false;
+		var saturdayHeaderAdded = false;
+		var sundayHeaderAdded = false;
+		var nowDate = new Date();
+		var aWeekForwardDate = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate()+7);
+
+		$("#event-list").html("");
+
+		//var url = "https://www.googleapis.com/calendar/v3/calendars/f7adpar1ncg3bhf3up3nkc71q4dbo519@import.calendar.google.com/events?key=AIzaSyBpC8w33ZkesSjaRZDnPdSVvrKFJcqAsdM&singleEvents=true&orderBy=startTime&timeMin=" + nowDate.toISOString() + "&timeMax=" + aWeekForwardDate.toISOString();
+		
+		//var url = "https://www.googleapis.com/calendar/v3/calendars/f7adpar1ncg3bhf3up3nkc71q4dbo519@import.calendar.google.com/events?alwaysIncludeEmail=false&singleEvents=true&timeMax=2019-08-30T10%3A00%3A00Z&timeMin=2019-08-23T10%3A00%3A00Z&key=AIzaSyDuXG_dBYN5SVWk_xuWXAreopdsdCqUfFs";
+		
+		$.getJSON(url, function(data) {
+
+		    for(i in data['items']) {
+
+		        item = data['items'][i];
+
+		        // Beskrivning
+		        description = item.summary;
+
+		        // Plats
+		        if (item.location != undefined)
+		        	location = item.location;
+		        else
+		        	location = '';
+
+		        // Start tid i HH:MM eller datum om heldagshändelse
+		        if (item.start != undefined) {
+			        if (item.start.dateTime != undefined) {
+				        startDate = new Date(item.start.dateTime);
+						hm = pad(startDate.getHours(), 2) + ":" + pad(startDate.getMinutes(), 2);
+				    }
+				    else {
+				    	startDate = new Date(item.start.date);
+				    	hm = '';
+				    }
+			    }
+
+			    if (nowDate.getDate() == startDate.getDate()) {
+				    // Idag
+					if (!todayHeaderAdded) {
+				    	$("#event-list").append("<div id='today' class='header'>Idag</div>");
+				    	todayHeaderAdded = true;
+					}
+
+					addRow(hm, description, location);
+
+			    }
+			    else if ((nowDate.getDate() + 1) == startDate.getDate()) {
+				    // I morgon
+
+					if (!todayHeaderAdded) {
+				    	$("#event-list").append("<div id='today' class='header'>Idag</div>");
+				    	todayHeaderAdded = true;
+						addRow('', 'Zzzzz...', '');
+					}
+
+					if (!tomorrowHeaderAdded) {
+				    	$("#event-list").append("<div id='tomorrow' class='header'>I morgon</div>");
+				    	tomorrowHeaderAdded = true;
+					}
+
+					addRow(hm, description, location);
+
+			    }
+			    else if (startDate.getDay() == 5) {
+				    // Fredag
+					if (!todayHeaderAdded) {
+				    	$("#event-list").append("<div id='today' class='header'>Idag</div>");
+				    	todayHeaderAdded = true;
+						addRow('', 'Zzzzz...', '');
+					}
+
+					if (!tomorrowHeaderAdded) {
+				    	$("#event-list").append("<div id='tomorrow' class='header'>I morgon</div>");
+				    	tomorrowHeaderAdded = true;
+						addRow('', 'Zzzzz...', '');
+					}
+
+					if (!fridayHeaderAdded) {
+				    	$("#event-list").append("<div id='tomorrow' class='header'>Fredag</div>");
+				    	fridayHeaderAdded = true;
+					}
+
+					addRow(hm, description, location);
+
+			    }
+			    else if (startDate.getDay() == 6) {
+				    // Lördag
+					if (!saturdayHeaderAdded) {
+				    	$("#event-list").append("<div id='tomorrow' class='header weekend'>Lördag</div>");
+				    	saturdayHeaderAdded = true;
+					}
+
+					addRow(hm, description, location);
+
+			    }
+			    else if (startDate.getDay() == 0) {
+				    // Söndag
+					if (!sundayHeaderAdded) {
+				    	$("#event-list").append("<div id='tomorrow' class='header weekend'>Söndag</div>");
+				    	sundayHeaderAdded = true;
+					}
+
+					addRow(hm, description, location);
+
+			    }
+		    }
+
+		    if (!fridayHeaderAdded && !saturdayHeaderAdded && !sundayHeaderAdded) {
+		    	$("#event-list").append("<div id='tomorrow' class='header'>Nästa helg</div>");
+				addRow('', 'Chilla galet!', '');
+		    }
+
+		});
+
+	}
+
+	function getSwe(direction) {
+		var i;
+
+		i = $.inArray(direction, cardinals);
+
+		if (i != -1)
+			return cardinals[i+1];
+		else
+			return "ERR";
+
+	}
+
+	function drawWeather() {
+		var nowDate = new Date();
+
+		$.simplerWeather({
+			authmethod: 'proxy',
+			proxyurl: 'http://app-o.se/jbn/kalender/js/proxy.php',
+		    success: function(weather) {
+console.log("w:", weather);
+		      html = '<br/><br/><br/><div class="container"><i class="icon-' + weather.code + '"></i><div class="UR pushdown">' + weather.alt.temp + '<small>&deg; ('+ Math.round(weather.wind.speed * 0.44704) + ' m/s ' + getSwe(weather.wind.direction).toLowerCase() + ')</small></div>';
+			  html = html + '<div class="LR">Idag</div><br/></div>';
+
+		      html = html + '<div class="container"><i class="icon-' + weather.forecast[1].code + ' lighter"></i><div class="UR lighter"><strong class="lighter">[</strong> ' + weather.forecast[1].alt.high + '&deg; <strong class="lighter">]</strong> ' + weather.forecast[1].alt.low + '&deg;</div>';
+			  html = html + '<div class="LR" style="color:rgb(200, 200, 200);">' + days[(nowDate.getDay()+1) % 7] + '</div></div>';
+		      html = html + '<div class="container"><i class="icon-' + weather.forecast[2].code + ' evenLighter"></i><div class="UR evenLighter"><strong class="evenLighter">[</strong> ' + weather.forecast[2].alt.high + '&deg; <strong class="evenLighter">]</strong> ' + weather.forecast[2].alt.low + '&deg;</div>';
+			  html = html + '<div class="LR" style="color:rgb(220, 220, 220);">' + days[(nowDate.getDay()+2) % 7] + '</div></div>';
+
+
+		      $("#weather").html(html);
+
+		      $("#sunrise").html('<strong>7</strong>' + convertTo24Hour(weather.sunrise));
+			  $("#sunset").html('<strong>8</strong>' + convertTo24Hour(weather.sunset));
+
+		    },
+
+		    error: function(error) {
+				console.log("err:", error);
+		      $("#weather").html('<p>'+error+'</p>');
+		    }
+
+		});
+
+	}
+	
+    function handleClientLoad() {
+        gapi.load('client:auth2', initClient);
+    }	
+    
+      function initClient() {
+        gapi.client.init({
+          apiKey: API_KEY,
+          clientId: CLIENT_ID,
+          discoveryDocs: DISCOVERY_DOCS,
+          scope: SCOPES
+        }).then(function () {
+          // Listen for sign-in state changes.
+          gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+
+          // Handle the initial sign-in state.
+          updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+          
+		  gapi.auth2.getAuthInstance().signIn();
+          
+        }, function(error) {
+          console.log(JSON.stringify(error, null, 2));
+        });
+      }    
+	
+	function executeQuery() {
+
+		var d = new Date();
+
+		//drawCalendar();
+		//drawWeather();
+		listUpcomingEvents();		
+		$(".timestamp")[0].innerHTML = d.toLocaleTimeString() + ", v. " + d.getWeek();
+		$("#background")[0].innerHTML = d.getDate();
+
+	  	var secondsBetweenUpdates = 200 * 1000;
+	  	setTimeout(executeQuery, secondsBetweenUpdates);
+	}	
+	
+
+	$(document).ready(function() {
+
+		handleClientLoad();
+		
+		setTimeout(executeQuery, 10000);
+
+	});
+	
+/*		gapi.load("client:auth2", function() {
+		gapi.auth2.init({client_id: "144895398888-6v6gsapbefsu6dmtnmb63i8qti76auek.apps.googleusercontent.com"});
+		});  
+*/	
+
+	</script>
+
+	<div class="frame">
+		<div id='event-list' class="event-list"></div>
+		<div id="weather"></div>
+		<div id="background">Dagens datum</div>
+	</div>
+	<div class="timestamp">timestamp</div>
+	<div id="sunrise" class="sunrise">sunrise</div>
+	<div id="sunset" class="sunset">sunset</div>
+
+</body>
+
+</html>
