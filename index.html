@@ -7,7 +7,8 @@
 	<link rel='stylesheet' type='text/css' href='css/styles.css'>
 	<script src="https://apis.google.com/js/api.js"></script>
 	<script src="js/core.js"></script>
-    
+
+	    
   </head>
 
     <script type="text/javascript">
@@ -56,6 +57,9 @@
 	    'NNW',
 	    'NNV'
 	];	    
+	
+	//import Darksky from 'darkskyjs';
+
 	    
 	var todayHeaderAdded = false;
 	var tomorrowHeaderAdded = false;
@@ -90,7 +94,7 @@
 		var element = document.getElementById('event-list');
 		
 		if (time != '')
-			time = "<span style='color: rgb(230,230,230)'>" + time + "</span> ";
+			time = "<span style='color: rgb(120,120,120)'>" + time + "</span> ";
 	
 		if (loc != '')
 			loc =  ", <span style='color: rgb(180,180,180)'>" + loc + "</span>";
@@ -212,7 +216,25 @@
 	
 	function drawWeather() {
 		var nowDate = new Date();
+		/*
 
+		darkSky.getCurrentConditions(
+		  [
+		    {
+		      latitude: 55.7099803,
+		      longitude: 13.3686299,
+		      name: 'Sandby'
+		    }
+		  ],
+		  function(conditions) {
+		    for (var i = 0, length = conditions.length; i < length; i++) {
+		      if (conditions[i].name === 'Sandby') {
+		        console.log(conditions[i].cloudCover());
+		      }
+		    }
+		  }
+		  );		 
+		   
 		$.simplerWeather({
 			authmethod: 'proxy',
 			proxyurl: 'http://app-o.se/jbn/kalender/js/proxy.php',
@@ -238,7 +260,7 @@ console.log("w:", weather);
 		      $("#weather").html('<p>'+error+'</p>');
 		    }
 
-		});
+		});*/
 	}
 
 	function printCalendar() {
@@ -285,6 +307,8 @@ console.log("w:", weather);
 		});
 		
 	  	setTimeout(printCalendar, 5*60*1000);
+	  	
+	  	//drawWeather();
 		
 	}
 
