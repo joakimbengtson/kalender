@@ -7,11 +7,11 @@
 	<link rel='stylesheet' type='text/css' href='css/styles.css'>
 	<script src="https://apis.google.com/js/api.js"></script>
 	<script src="js/core.js"></script>
-
+	<script src="lib/jquery/jquery-3.4.1.min.js"></script>
 	    
   </head>
 
-    <script type="text/javascript">
+<script>
 	    
 	var days = [
 	    'Söndag',
@@ -58,14 +58,51 @@
 	    'NNV'
 	];	    
 	
-	//import Darksky from 'darkskyjs';
-
 	    
 	var todayHeaderAdded = false;
 	var tomorrowHeaderAdded = false;
 	var fridayHeaderAdded = false;
 	var saturdayHeaderAdded = false;
 	var sundayHeaderAdded = false;
+	
+	function test()
+	{
+		var url = 'https://api.darksky.net/forecast/026b516254444d86e1316ef6c25854b4/55.7099803,13.3686299?exclude=minutely,hourly&units=si&lang=sv';
+		
+		$.ajax({
+		    type: 'POST',
+		    url: url,
+		    cache: false,
+		    data: {
+		    },
+		    contentType: 'application/json; charset=utf-8',
+		    dataType: 'json',
+		    xhrFields: {
+		       withCredentials: true
+		    },		    
+		    crossDomain: true,
+
+		    success: function (result)
+		    {
+		        console.log(result);
+		    } });		
+		
+		/*
+$.get('https://api.darksky.net/forecast/026b516254444d86e1316ef6c25854b4/55.7099803,13.3686299?exclude=minutely,hourly&units=si&lang=sv',function(data,status) {
+	console.log(data);
+},'html');*/		
+	}
+	
+	function httpGetAsync(drawWeather)
+	{
+	    var xmlHttp = new XMLHttpRequest();
+	    xmlHttp.onreadystatechange = function() { 
+	        if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+	            drawWeather(xmlHttp.responseText);
+	    }
+	    xmlHttp.open("GET", "https://api.darksky.net/forecast/026b516254444d86e1316ef6c25854b4/55.7099803,13.3686299?exclude=minutely,hourly&units=si&lang=sv", true); // true for asynchronous 
+	    xmlHttp.send(null);
+	}	
 	    	    
 	function convertTo24Hour(time) {
 	    var hours = parseInt(time.substr(0, 2));
@@ -214,8 +251,9 @@
 	    }		
 	}    
 	
-	function drawWeather() {
-		var nowDate = new Date();
+	function drawWeather(txt) {
+		console.log(txt);
+
 		/*
 
 		darkSky.getCurrentConditions(
@@ -308,7 +346,8 @@ console.log("w:", weather);
 		
 	  	setTimeout(printCalendar, 5*60*1000);
 	  	
-	  	//drawWeather();
+	  	test();
+	  	//httpGetAsync(drawWeather);
 		
 	}
 
