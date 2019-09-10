@@ -22,109 +22,60 @@
 	    'Fredag',
 	    'Lördag'
 	];
-
-	var cardinals = [
-	    'N',
-	    'N',
-	    'NNE',
-	    'NNO',
-	    'NE',
-	    'NO',
-	    'ENE',
-	    'ONO',
-	    'E',
-	    'Ö',
-	    'ESE',
-	    'OSO',
-	    'SE',
-	    'SO',
-	    'SSE',
-	    'SSO',
-	    'S',
-	    'S',
-	    'SSW',
-	    'SSV',
-	    'SW',
-	    'SV',
-	    'WSW',
-	    'VSV',
-	    'W',
-	    'V',
-	    'WNW',
-	    'VNV',
-	    'NW',
-	    'NV',
-	    'NNW',
-	    'NNV'
-	];	    
 	
-	    
 	var todayHeaderAdded = false;
 	var tomorrowHeaderAdded = false;
 	var fridayHeaderAdded = false;
 	var saturdayHeaderAdded = false;
 	var sundayHeaderAdded = false;
 	
-	function test()
-	{
-		var url = 'https://api.darksky.net/forecast/026b516254444d86e1316ef6c25854b4/55.7099803,13.3686299?exclude=minutely,hourly&units=si&lang=sv';
+	function pad(n) {
+	    return n < 10 ? "0" + n : n;
+	}
 		
-		$.ajax({
-		    type: 'POST',
-		    url: url,
-		    cache: false,
-		    data: {
-		    },
-		    contentType: 'application/json; charset=utf-8',
-		    dataType: 'json',
-		    xhrFields: {
-		       withCredentials: true
-		    },		    
-		    crossDomain: true,
+	
+	function convertTo24Hour(timestamp) {
+		date = new Date(timestamp * 1000);
 
-		    success: function (result)
-		    {
-		        console.log(result);
-		    } });		
-		
-		/*
-$.get('https://api.darksky.net/forecast/026b516254444d86e1316ef6c25854b4/55.7099803,13.3686299?exclude=minutely,hourly&units=si&lang=sv',function(data,status) {
-	console.log(data);
-},'html');*/		
+		return pad(date.getHours()) + ':' + pad(date.getMinutes());
 	}
 	
-	function httpGetAsync(drawWeather)
-	{
-	    var xmlHttp = new XMLHttpRequest();
-	    xmlHttp.onreadystatechange = function() { 
-	        if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
-	            drawWeather(xmlHttp.responseText);
-	    }
-	    xmlHttp.open("GET", "https://api.darksky.net/forecast/026b516254444d86e1316ef6c25854b4/55.7099803,13.3686299?exclude=minutely,hourly&units=si&lang=sv", true); // true for asynchronous 
-	    xmlHttp.send(null);
-	}	
-	    	    
-	function convertTo24Hour(time) {
-	    var hours = parseInt(time.substr(0, 2));
-	    if(time.indexOf('am') != -1 && hours == 12) {
-			time = time.replace('12', '0');
-	    }
-	    if(time.indexOf('pm')  != -1 && hours < 12) {
-			time = time.replace(hours, (hours + 12));
-	    }
-	    return time.replace(/(am|pm)/, '');
-	}
 	
-	function getSwe(direction) {
-		var i;
-
-		i = $.inArray(direction, cardinals);
-
-		if (i != -1)
-			return cardinals[i+1];
+	function getSwe(degrees) {
+		if (degrees > 348.75 || degrees < 11.25)
+			return 'N';		
+		else if (degrees >= 11.25 && degrees < 33.75)
+			return 'NNÖ';
+		else if (degrees >= 33.75 && degrees < 56.25)
+			return 'NÖ';
+		else if (degrees >= 56.25 && degrees < 78.75)
+			return 'ÖNÖ';
+		else if (degrees >= 78.75 && degrees < 101.25)
+			return 'Ö';
+		else if (degrees >= 101.25 && degrees < 123.75)
+			return 'ÖSÖ';
+		else if (degrees >= 123.75 && degrees < 146.25)
+			return 'SÖ';
+		else if (degrees >= 146.25 && degrees < 168.75)
+			return 'SSÖ';
+		else if (degrees >= 168.75 && degrees < 191.25)
+			return 'S';
+		else if (degrees >= 191.25 && degrees < 213.75)
+			return 'SSV';
+		else if (degrees >= 213.75 && degrees < 236.25)
+			return 'SV';
+		else if (degrees >= 236.25 && degrees < 258.75)
+			return 'VSV';
+		else if (degrees >= 258.75 && degrees < 281.25)
+			return 'V';
+		else if (degrees >= 281.25 && degrees < 303.75)
+			return 'VNV';
+		else if (degrees >= 303.75 && degrees < 326.25)
+			return 'NV';
+		else if (degrees >= 326.25 && degrees < 348.75)
+			return 'NNV';
 		else
-			return "ERR";
-
+			return 'ERR';
 	}	
 	
 	var addRow = function (time, desc, loc) {
@@ -134,7 +85,7 @@ $.get('https://api.darksky.net/forecast/026b516254444d86e1316ef6c25854b4/55.7099
 			time = "<span style='color: rgb(120,120,120)'>" + time + "</span> ";
 	
 		if (loc != '')
-			loc =  ", <span style='color: rgb(180,180,180)'>" + loc + "</span>";
+			loc =  ", <span style='color: rgb(180,180,180)'><br/><small>" + loc + "</small></span>";
 	
 		element.innerHTML += "<div class='row'>" + time + desc + loc + "</div>";		
 	};
@@ -251,54 +202,52 @@ $.get('https://api.darksky.net/forecast/026b516254444d86e1316ef6c25854b4/55.7099
 	    }		
 	}    
 	
-	function drawWeather(txt) {
-		console.log(txt);
-
-		/*
-
-		darkSky.getCurrentConditions(
-		  [
-		    {
-		      latitude: 55.7099803,
-		      longitude: 13.3686299,
-		      name: 'Sandby'
-		    }
-		  ],
-		  function(conditions) {
-		    for (var i = 0, length = conditions.length; i < length; i++) {
-		      if (conditions[i].name === 'Sandby') {
-		        console.log(conditions[i].cloudCover());
-		      }
-		    }
-		  }
-		  );		 
-		   
-		$.simplerWeather({
-			authmethod: 'proxy',
-			proxyurl: 'http://app-o.se/jbn/kalender/js/proxy.php',
-		    success: function(weather) {
-console.log("w:", weather);
-		      html = '<br/><br/><br/><div class="container"><i class="icon-' + weather.code + '"></i><div class="UR pushdown">' + weather.alt.temp + '<small>&deg; ('+ Math.round(weather.wind.speed * 0.44704) + ' m/s ' + getSwe(weather.wind.direction).toLowerCase() + ')</small></div>';
-			  html = html + '<div class="LR">Idag</div><br/></div>';
-
-		      html = html + '<div class="container"><i class="icon-' + weather.forecast[1].code + ' lighter"></i><div class="UR lighter"><strong class="lighter">[</strong> ' + weather.forecast[1].alt.high + '&deg; <strong class="lighter">]</strong> ' + weather.forecast[1].alt.low + '&deg;</div>';
-			  html = html + '<div class="LR" style="color:rgb(200, 200, 200);">' + days[(nowDate.getDay()+1) % 7] + '</div></div>';
-		      html = html + '<div class="container"><i class="icon-' + weather.forecast[2].code + ' evenLighter"></i><div class="UR evenLighter"><strong class="evenLighter">[</strong> ' + weather.forecast[2].alt.high + '&deg; <strong class="evenLighter">]</strong> ' + weather.forecast[2].alt.low + '&deg;</div>';
-			  html = html + '<div class="LR" style="color:rgb(220, 220, 220);">' + days[(nowDate.getDay()+2) % 7] + '</div></div>';
-
-		      $("#weather").html(html);
-
-		      $("#sunrise").html('<strong>7</strong>' + convertTo24Hour(weather.sunrise));
-			  $("#sunset").html('<strong>8</strong>' + convertTo24Hour(weather.sunset));
-
+	function drawWeather() {
+		var url = 'https://api.darksky.net/forecast/026b516254444d86e1316ef6c25854b4/55.7099803,13.3686299?exclude=minutely,hourly&units=si&lang=sv';
+		var nowDate = new Date();
+		
+		$.ajax({
+		    type: 'GET',
+		    url: url,
+		    cache: false,
+		    data: {
 		    },
+		    contentType: 'application/json; charset=utf-8',
+		    dataType: 'jsonp',
+		    xhrFields: {
+		       withCredentials: true
+		    },		    
+		    crossDomain: true,
 
+		    success: function (result) {
+
+		      html = '<div class="container">';
+		      html = html + '<div class="box">';
+		      
+		      html = html + '<p>Idag<br/><i class="icon-' + result.currently.icon + '"></i><br/><b>' + ~~result.currently.temperature + '&deg;</b><br/><small> ('+ ~~result.currently.windSpeed + ' m/s ' + getSwe(result.currently.windBearing).toLowerCase() + ')</small></p>';
+
+		      html = html + '<p>' + days[(nowDate.getDay()+1) % 7] + '<br/><i class="icon-' + result.daily.data[1].icon + '"></i><br/><b>' + ~~result.daily.data[1].temperatureHigh + '&deg;-' + ~~result.daily.data[1].temperatureLow + '&deg;</b></p>';
+
+		      html = html + '<p class="last">' + days[(nowDate.getDay()+2) % 7] + '<br/><i class="icon-' + result.daily.data[2].icon + '"></i><br/><b>' + ~~result.daily.data[2].temperatureHigh + '&deg;-' + ~~result.daily.data[2].temperatureLow + '&deg;</b></p>';
+		      
+			  html = html + '</div>';			  
+			  html = html + '</div>';
+
+			  var element = document.getElementById('weather');
+			  element.innerHTML = html;		    	
+
+			  element = document.getElementById('sunrise');
+			  element.innerHTML = '<strong>7</strong>' + convertTo24Hour(result.daily.data[0].sunriseTime);		    	
+			  
+			  element = document.getElementById('sunset');
+			  element.innerHTML = '<strong>8</strong>' + convertTo24Hour(result.daily.data[0].sunsetTime);
+		    },
+		    
 		    error: function(error) {
-				console.log("err:", error);
 		      $("#weather").html('<p>'+error+'</p>');
 		    }
-
-		});*/
+		    
+		    });				
 	}
 
 	function printCalendar() {
@@ -343,11 +292,10 @@ console.log("w:", weather);
 		}, function (reason) {
 			console.log('Error: ' + reason.result.error.message);
 		});
+
+	  	drawWeather();
 		
 	  	setTimeout(printCalendar, 5*60*1000);
-	  	
-	  	test();
-	  	//httpGetAsync(drawWeather);
 		
 	}
 
