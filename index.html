@@ -29,6 +29,8 @@
 	var saturdayHeaderAdded = false;
 	var sundayHeaderAdded = false;
 	
+	var callWeatherInterval = 0;
+	
 	function pad(n) {
 	    return n < 10 ? "0" + n : n;
 	}
@@ -226,9 +228,9 @@
 		      
 		      html = html + '<p>Idag<br/><i class="icon-' + result.currently.icon + '"></i><br/><b>' + ~~result.currently.temperature + '&deg;</b><br/><small> ('+ ~~result.currently.windSpeed + ' m/s ' + getSwe(result.currently.windBearing).toLowerCase() + ')</small></p>';
 
-		      html = html + '<p>' + days[(nowDate.getDay()+1) % 7] + '<br/><i class="icon-' + result.daily.data[1].icon + '"></i><br/><b>' + ~~result.daily.data[1].temperatureHigh + '&deg;-' + ~~result.daily.data[1].temperatureLow + '&deg;</b></p>';
+		      html = html + '<p>' + days[(nowDate.getDay()+1) % 7] + '<br/><i class="icon-' + result.daily.data[1].icon + '"></i><br/><b>' + ~~result.daily.data[1].temperatureLow + '&deg;-' + ~~result.daily.data[1].temperatureHigh + '&deg;</b></p>';
 
-		      html = html + '<p class="last">' + days[(nowDate.getDay()+2) % 7] + '<br/><i class="icon-' + result.daily.data[2].icon + '"></i><br/><b>' + ~~result.daily.data[2].temperatureHigh + '&deg;-' + ~~result.daily.data[2].temperatureLow + '&deg;</b></p>';
+		      html = html + '<p class="last">' + days[(nowDate.getDay()+2) % 7] + '<br/><i class="icon-' + result.daily.data[2].icon + '"></i><br/><b>' + ~~result.daily.data[2].temperatureLow + '&deg;-' + ~~result.daily.data[2].temperatureHigh + '&deg;</b></p>';
 		      
 			  html = html + '</div>';			  
 			  html = html + '</div>';
@@ -292,8 +294,13 @@
 		}, function (reason) {
 			console.log('Error: ' + reason.result.error.message);
 		});
-
-	  	drawWeather();
+		
+		if (callWeatherInterval >= 5) {
+		  	drawWeather();
+			callWeatherInterval = 0;
+		}
+		
+		callWeatherInterval += 1;
 		
 	  	setTimeout(printCalendar, 5*60*1000);
 		
